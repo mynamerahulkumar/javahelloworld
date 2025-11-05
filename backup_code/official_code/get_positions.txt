@@ -1,0 +1,27 @@
+Code samples
+
+import requests
+headers = {
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.get('https://api.india.delta.exchange/v2/positions', params={
+  'product_id': '0'
+}, headers = headers)
+
+print r.json()
+
+Example responses
+
+200 Response
+
+{
+  "success": true,
+  "result": {
+    "size": 0,
+    "entry_price": "string"
+  }
+}

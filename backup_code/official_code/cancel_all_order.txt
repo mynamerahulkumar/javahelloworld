@@ -1,0 +1,34 @@
+Code samples
+
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.delete('https://api.india.delta.exchange/v2/orders/all', params={
+
+}, headers = headers)
+
+print r.json()
+Body parameter
+
+{
+  "product_id": 27,
+  "contract_types": "perpetual_futures,put_options,call_options",
+  "cancel_limit_orders": false,
+  "cancel_stop_orders": false,
+  "cancel_reduce_only_orders": false
+}
+Parameters
+Parameter	In	Type	Required	Description
+body	body	CancelAllFilterObject	false	Filters for selecting orders that needs to be cancelled
+Example responses
+200 Response
+
+{
+  "success": true
+}

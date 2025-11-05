@@ -1,0 +1,8 @@
+"""
+Strategies package for algorithmic trading strategies
+"""
+from .base_strategy import BaseStrategy
+from .strategy_manager import StrategyManager
+
+__all__ = ['BaseStrategy', 'StrategyManager']
+

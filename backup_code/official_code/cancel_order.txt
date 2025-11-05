@@ -1,0 +1,51 @@
+Code samples
+
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.delete('https://api.india.delta.exchange/v2/orders', params={
+
+}, headers = headers)
+
+print r.json()
+
+
+Body parameter
+
+{
+  "id": 13452112,
+  "client_order_id": "my_signal_34521712",
+  "product_id": 27
+}
+Example responses
+
+200 Response
+
+{
+  "success": true,
+  "result": {
+    "id": 123,
+    "user_id": 453671,
+    "size": 10,
+    "unfilled_size": 2,
+    "side": "buy",
+    "order_type": "limit_order",
+    "limit_price": "59000",
+    "stop_order_type": "stop_loss_order",
+    "stop_price": "55000",
+    "paid_commission": "0.5432",
+    "commission": "0.5432",
+    "reduce_only": false,
+    "client_order_id": "my_signal_34521712",
+    "state": "open",
+    "created_at": "1725865012000000",
+    "product_id": 27,
+    "product_symbol": "BTCUSD"
+  }
+}

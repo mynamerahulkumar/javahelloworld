@@ -1,0 +1,55 @@
+Code samples
+
+import requests
+headers = {
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.get('https://api.india.delta.exchange/v2/wallet/balances', params={
+
+}, headers = headers)
+
+print r.json()
+
+200 Response
+
+{
+  "meta": {
+    "net_equity": "string",
+    "robo_trading_equity": "string"
+  },
+  "result": [
+    {
+      "asset_id": 0,
+      "asset_symbol": "string",
+      "available_balance": "string",
+      "available_balance_for_robo": "string",
+      "balance": "string",
+      "blocked_margin": "string",
+      "commission": "string",
+      "cross_asset_liability": "string",
+      "cross_commission": "string",
+      "cross_locked_collateral": "string",
+      "cross_order_margin": "string",
+      "cross_position_margin": "string",
+      "id": 0,
+      "interest_credit": "string",
+      "order_margin": "string",
+      "pending_referral_bonus": "string",
+      "pending_trading_fee_credit": "string",
+      "portfolio_margin": "string",
+      "position_margin": "string",
+      "trading_fee_credit": "string",
+      "unvested_amount": "string",
+      "user_id": 0
+    }
+  ],
+  "success": true
+}
+Responses
+Status	Meaning	Description	Schema
+200	OK	List of wallets attached to the user account	WalletPayload
+ To perform this operation, you must be sign the request using your api key and secret. See Authentication section for more details.

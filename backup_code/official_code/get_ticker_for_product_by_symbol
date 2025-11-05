@@ -1,0 +1,66 @@
+import requests
+
+headers = {
+  'Accept': 'application/json'
+}
+
+r = requests.get('https://api.india.delta.exchange/v2/tickers/{symbol}', params={
+
+}, headers = headers)
+
+print r.json()
+
+Example responses
+
+200 Response
+
+{
+  "success": true,
+  "result": {
+    "close": 67321,
+    "contract_type": "futures",
+    "greeks": {
+      "delta": "0.25",
+      "gamma": "0.10",
+      "rho": "0.05",
+      "theta": "-0.02",
+      "vega": "0.15"
+    },
+    "high": 68500.5,
+    "low": 66300.25,
+    "mark_price": "67000.00",
+    "mark_vol": "500",
+    "oi": "15000",
+    "oi_value": "1000000",
+    "oi_value_symbol": "USD",
+    "oi_value_usd": "1050000",
+    "open": 67000,
+    "price_band": {
+      "lower_limit": "61120.45",
+      "upper_limit": "72300.00"
+    },
+    "product_id": 123456,
+    "quotes": {
+      "ask_iv": "0.25",
+      "ask_size": "100",
+      "best_ask": "150.00",
+      "best_bid": "148.00",
+      "bid_iv": "0.22",
+      "bid_size": "50"
+    },
+    "size": 100,
+    "spot_price": "67000.00",
+    "strike_price": "68000.00",
+    "symbol": "BTCUSD",
+    "timestamp": 1609459200,
+    "turnover": 5000000,
+    "turnover_symbol": "USD",
+    "turnover_usd": 5200000,
+    "volume": 25000
+  }
+}
+
+current market price=mark_price from response
+Parameters
+Parameter	In	Type	Required	Description
+symbol	path	string	true	The symbol of the product for which the ticker data is requested (e.g., BTCUSD, ETHUSD).

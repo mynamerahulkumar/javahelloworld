@@ -1,0 +1,52 @@
+Code samples
+
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.post('https://api.india.delta.exchange/v2/orders/bracket', params={
+
+}, headers = headers)
+
+print r.json()
+
+
+Body parameter
+
+{
+  "product_id": 27,
+  "product_symbol": "BTCUSD",
+  "stop_loss_order": {
+    "order_type": "limit_order",
+    "stop_price": "56000",
+    "trail_amount": "50",
+    "limit_price": "55000"
+  },
+  "take_profit_order": {
+    "order_type": "limit_order",
+    "stop_price": "65000",
+    "limit_price": "64000"
+  },
+  "bracket_stop_trigger_method": "last_traded_price"
+}
+Parameters
+Parameter	In	Type	Required	Description
+body	body	CreateBracketOrderRequest	true	Bracket Order which needs to be updated
+
+Example responses
+
+200 Response
+
+{
+  "success": true
+}
+Responses
+Status	Meaning	Description	Schema
+200	OK	returns back success response	ApiSuccessResponse
+400	Bad Request	Returns error if orders could not be updated	ApiErrorResponse
+ To perform this operation, you must be sign the request using your api key and secret. See Authentication section for more details.
