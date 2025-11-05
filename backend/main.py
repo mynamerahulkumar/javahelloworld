@@ -34,10 +34,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS middleware for Postman access
+# Configure CORS middleware
+# In production, use specific origins; in development, allow all for Postman
+environment = os.getenv("ENVIRONMENT", "development").lower()
+if environment == "production":
+    # Production: Use specific origins from environment variable
+    allowed_origins = os.getenv("CORS_ORIGINS", "").split(",")
+    allowed_origins = [origin.strip() for origin in allowed_origins if origin.strip()]
+    if not allowed_origins:
+        # Default to allow all if not configured (should be configured in production)
+        allowed_origins = ["*"]
+else:
+    # Development: Allow all origins for Postman and local development
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for Postman
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,15 +78,21 @@ def main():
     
     port = int(os.getenv("PORT", 8501))
     host = os.getenv("HOST", "0.0.0.0")
+    # Enable reload only in development mode (default: True for local, False for production)
+    reload = os.getenv("ENVIRONMENT", "development").lower() != "production"
+    workers = int(os.getenv("WORKERS", "1")) if not reload else 1  # Workers only in production
     
     logger.info(f"Starting Trading API server on {host}:{port}")
+    logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
+    logger.info(f"Reload: {reload}, Workers: {workers if not reload else 1}")
     
     uvicorn.run(
         "main:app",
         host=host,
         port=port,
-        reload=True,
-        log_level="info"
+        reload=reload,
+        workers=workers if not reload else 1,
+        log_level=os.getenv("LOG_LEVEL", "info").lower()
     )
 
 
