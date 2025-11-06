@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# View logs script for Full Stack Application
+# View logs script for Full Stack Application (AWS EC2 Linux optimized)
 # This script provides easy access to view logs
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,25 +8,35 @@ cd "$SCRIPT_DIR"
 
 BACKEND_LOG="logs/backend.log"
 FRONTEND_LOG="logs/frontend.log"
+BACKEND_BOT_LOG="backend/logs/bot.log"
 
 case "${1:-all}" in
     backend)
-        if [ ! -f "$BACKEND_LOG" ]; then
-            echo "⚠️  Backend log file not found: $BACKEND_LOG"
+        # Check for backend log files (try multiple locations)
+        if [ -f "$BACKEND_LOG" ]; then
+            LOG_FILE="$BACKEND_LOG"
+        elif [ -f "$BACKEND_BOT_LOG" ]; then
+            LOG_FILE="$BACKEND_BOT_LOG"
+        else
+            echo "⚠️  Backend log file not found. Tried:"
+            echo "   - $BACKEND_LOG"
+            echo "   - $BACKEND_BOT_LOG"
+            echo ""
+            echo "💡 If using systemd, try: sudo journalctl -u trading-backend -f"
             exit 1
         fi
-        echo "📝 Backend Logs:"
+        echo "📝 Backend Logs: $LOG_FILE"
         echo ""
         case "${2:-tail}" in
             tail)
-                tail -f "$BACKEND_LOG"
+                tail -f "$LOG_FILE"
                 ;;
             lines)
                 LINES=${3:-50}
-                tail -n "$LINES" "$BACKEND_LOG"
+                tail -n "$LINES" "$LOG_FILE"
                 ;;
             all)
-                cat "$BACKEND_LOG"
+                cat "$LOG_FILE"
                 ;;
             *)
                 echo "Usage: $0 backend [tail|lines|all] [number_of_lines]"

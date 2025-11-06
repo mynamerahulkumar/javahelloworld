@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Restart script for both Frontend and Backend
+# Restart script for both Frontend and Backend (LOCAL DEVELOPMENT)
 # This script stops and then starts both services
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,4 +19,3 @@ sleep 3
 
 # Start all services
 ./start-all.sh
-

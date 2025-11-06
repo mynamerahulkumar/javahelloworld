@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Restart script for Trading API
+# Restart script for Trading API (LOCAL DEVELOPMENT)
 # This script stops and then starts the FastAPI server
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,4 +16,3 @@ sleep 2
 
 # Start the server
 ./start.sh
-

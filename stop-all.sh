@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Stop script for both Frontend and Backend
+# Stop script for both Frontend and Backend (LOCAL DEVELOPMENT)
 # This script stops both the FastAPI backend and Next.js frontend
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -82,4 +82,3 @@ fi
 
 echo ""
 echo "✅ Full Stack Application Stopped!"
-
