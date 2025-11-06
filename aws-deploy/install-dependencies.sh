@@ -254,7 +254,21 @@ cd frontend
 if [ -f "package.json" ]; then
     echo "   Building Next.js application..."
     npm run build
+    BUILD_EXIT_CODE=$?
+    if [ $BUILD_EXIT_CODE -ne 0 ]; then
+        echo "   ❌ Frontend build failed with exit code $BUILD_EXIT_CODE"
+        echo "   Please check the build output above for errors."
+        exit 1
+    fi
+    
+    # Verify build was successful
+    if [ ! -f ".next/BUILD_ID" ]; then
+        echo "   ❌ Build completed but BUILD_ID file is missing. Build may have failed."
+        exit 1
+    fi
+    
     echo "   ✅ Frontend built successfully"
+    echo "   Build ID: $(cat .next/BUILD_ID 2>/dev/null || echo 'N/A')"
 else
     echo "   ❌ package.json not found in frontend directory"
     exit 1

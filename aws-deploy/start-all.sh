@@ -88,15 +88,50 @@ cd frontend
 if [ ! -d "node_modules" ]; then
     echo "⚠️  node_modules not found. Installing dependencies..."
     npm ci
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to install frontend dependencies"
+        exit 1
+    fi
 fi
 
-# Check if production build exists
+# Check if production build exists and is valid
+BUILD_NEEDED=false
 if [ ! -d ".next" ]; then
-    echo "⚠️  Production build not found. Building..."
+    echo "⚠️  Production build directory not found. Building..."
+    BUILD_NEEDED=true
+elif [ ! -f ".next/BUILD_ID" ]; then
+    echo "⚠️  Production build is incomplete (missing BUILD_ID). Rebuilding..."
+    BUILD_NEEDED=true
+else
+    echo "✅ Production build found. Verifying..."
+    # Check if build is recent (within last 7 days) or force rebuild if needed
+    BUILD_AGE=$(find .next/BUILD_ID -mtime +7 2>/dev/null | wc -l)
+    if [ "$BUILD_AGE" -gt 0 ]; then
+        echo "⚠️  Production build is older than 7 days. Rebuilding..."
+        BUILD_NEEDED=true
+    fi
+fi
+
+# Build if needed
+if [ "$BUILD_NEEDED" = true ]; then
+    echo "🏗️  Building Next.js application for production..."
     npm run build
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to build frontend. Check the output above for errors."
+        exit 1
+    fi
+    echo "✅ Frontend build completed successfully"
+fi
+
+# Verify build exists before starting
+if [ ! -f ".next/BUILD_ID" ]; then
+    echo "❌ Production build is still missing after build attempt. Cannot start frontend."
+    echo "   Please check the build output above for errors."
+    exit 1
 fi
 
 # Start in production mode
+echo "🚀 Starting Next.js production server..."
 NODE_ENV=production nohup npm run start > ../logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 
@@ -111,7 +146,9 @@ sleep 5
 # Verify frontend is running
 if ! ps -p $FRONTEND_PID > /dev/null 2>&1; then
     echo "❌ Frontend failed to start. Check logs/frontend.log for details"
-    tail -20 logs/frontend.log
+    echo ""
+    echo "Last 30 lines of frontend.log:"
+    tail -30 logs/frontend.log
     exit 1
 fi
 
