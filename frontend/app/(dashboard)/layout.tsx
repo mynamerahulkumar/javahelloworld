@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
+import { useUser, useAuth } from "@/lib/auth/supabase/hooks";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -14,15 +14,36 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, clearAuth } = useAuthStore();
+  const { user: supabaseUser, isLoading: supabaseLoading } = useUser();
+  const { logout } = useAuth();
+
+  // Check if user is authenticated via Supabase only
+  const isAuthenticated = !!supabaseUser;
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!supabaseLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, supabaseLoading, router]);
 
-  if (!isAuthenticated) {
+  const handleLogout = async () => {
+    try {
+      const result = await logout();
+      if (result?.error) {
+        console.error("Logout error:", result.error);
+        // Force redirect even if there's an error
+        router.push("/login");
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Force redirect even if there's an error
+      router.push("/login");
+      router.refresh();
+    }
+  };
+
+  if (!supabaseLoading && !isAuthenticated) {
     return null;
   }
 
@@ -30,6 +51,7 @@ export default function DashboardLayout({
     { href: "/dashboard", label: "Dashboard" },
     { href: "/orders", label: "Orders" },
     { href: "/strategies", label: "Strategies" },
+    { href: "/settings", label: "Settings" },
   ];
 
   return (
@@ -43,7 +65,7 @@ export default function DashboardLayout({
                   <span className="text-white font-bold text-sm">AT</span>
                 </div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Algo Trading
+                  SRP Algo Trading
                 </h1>
               </div>
               <div className="flex space-x-1">
@@ -64,8 +86,15 @@ export default function DashboardLayout({
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={() => { clearAuth(); router.push("/login"); }} asChild>
-                <Link href="/login">Logout</Link>
+              {supabaseUser && (
+                <span className="text-sm text-gray-600">
+                  {supabaseUser.user_metadata?.name || 
+                   supabaseUser.user_metadata?.full_name || 
+                   supabaseUser.email}
+                </span>
+              )}
+              <Button variant="outline" onClick={handleLogout}>
+                Logout
               </Button>
             </div>
           </div>
@@ -75,4 +104,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
 

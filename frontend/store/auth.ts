@@ -1,32 +1,41 @@
 /**
  * Zustand store for authentication state
- * IMPORTANT: No sensitive credentials are stored for privacy reasons
+ * 
+ * This store is used to cache SRP client ID and email from Supabase user metadata.
+ * These values are used for order placement validation (CSV whitelist check).
+ * 
+ * IMPORTANT: No sensitive credentials are stored for privacy reasons.
+ * Client ID and email come from Supabase user metadata (set during user migration).
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface AuthState {
-  isAuthenticated: boolean;
-  setAuthenticated: (authenticated: boolean) => void;
-  clearAuth: () => void;
+  srpClientId: string | null;
+  srpClientEmail: string | null;
+  setClientInfo: (clientId: string | null, clientEmail: string | null) => void;
+  clearClientInfo: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      isAuthenticated: false,
-      setAuthenticated: (authenticated: boolean) =>
+      srpClientId: null,
+      srpClientEmail: null,
+      setClientInfo: (clientId: string | null, clientEmail: string | null) =>
         set({
-          isAuthenticated: authenticated,
+          srpClientId: clientId || null,
+          srpClientEmail: clientEmail || null,
         }),
-      clearAuth: () =>
+      clearClientInfo: () =>
         set({
-          isAuthenticated: false,
+          srpClientId: null,
+          srpClientEmail: null,
         }),
     }),
     {
       name: "auth-storage",
-      // Only persist isAuthenticated flag, no sensitive data
+      // Only persist SRP client identifiers for order validation
     }
   )
 );

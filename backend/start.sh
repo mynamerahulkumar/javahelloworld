@@ -18,17 +18,8 @@ echo "📝 Logs will be written to: logs/bot.log"
 echo "📊 View logs with: tail -f logs/bot.log"
 echo ""
 
-# Start the server in the background
-# Use reload only in development mode (default: development)
-ENVIRONMENT="${ENVIRONMENT:-development}"
-if [ "$ENVIRONMENT" = "production" ]; then
-    # Production mode: no reload, multiple workers
-    WORKERS="${WORKERS:-4}"
-    nohup python -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers $WORKERS > logs/bot.log 2>&1 &
-else
-    # Development mode: with reload
-    nohup python -m uvicorn main:app --host 0.0.0.0 --port 8501 --reload > logs/bot.log 2>&1 &
-fi
+# Start the server in the background using uv run to ensure correct Python environment
+nohup uv run python -m uvicorn main:app --host 0.0.0.0 --port 8501 --reload > logs/bot.log 2>&1 &
 
 # Save the process ID
 echo $! > bot.pid

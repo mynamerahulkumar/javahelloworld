@@ -1,0 +1,36 @@
+import requests
+headers = {
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.get('https://api.india.delta.exchange/v2/positions/margined', params={
+
+}, headers = headers)
+
+print r.json()
+
+200 Response
+
+{
+  "success": true,
+  "result": [
+    {
+      "user_id": 0,
+      "size": 0,
+      "entry_price": "string",
+      "margin": "string",
+      "liquidation_price": "string",
+      "bankruptcy_price": "string",
+      "adl_level": 0,
+      "product_id": 0,
+      "product_symbol": "string",
+      "commission": "string",
+      "realized_pnl": "string",
+      "realized_funding": "string"
+    }
+  ]
+}
+

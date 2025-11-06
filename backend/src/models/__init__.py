@@ -152,3 +152,144 @@ class StrategyLogsResponse(BaseModel):
     """Response model for strategy logs"""
     strategy_id: str
     logs: str
+
+
+# Positions and Orders models
+class Position(BaseModel):
+    """Position data structure"""
+    user_id: int
+    size: float
+    entry_price: str
+    margin: str
+    liquidation_price: Optional[str] = None
+    bankruptcy_price: Optional[str] = None
+    adl_level: Optional[int] = None
+    product_id: int
+    product_symbol: str
+    commission: Optional[str] = None
+    realized_pnl: Optional[str] = None
+    realized_funding: Optional[str] = None
+
+
+class PositionResponse(BaseModel):
+    """Response model for positions"""
+    success: bool = True
+    positions: List[Position]
+
+
+class OrderHistoryItem(BaseModel):
+    """Single order history item"""
+    id: int
+    user_id: int
+    size: int
+    unfilled_size: Optional[int] = None
+    side: str
+    order_type: str
+    limit_price: Optional[str] = None
+    stop_order_type: Optional[str] = None
+    stop_price: Optional[str] = None
+    paid_commission: Optional[str] = None
+    commission: Optional[str] = None
+    reduce_only: bool = False
+    client_order_id: Optional[str] = None
+    state: str
+    created_at: str
+    product_id: int
+    product_symbol: str
+
+
+class OrderHistoryMeta(BaseModel):
+    """Pagination metadata for order history"""
+    after: Optional[str] = None
+    before: Optional[str] = None
+
+
+class OrderHistoryResponse(BaseModel):
+    """Response model for order history"""
+    success: bool = True
+    result: List[OrderHistoryItem]
+    meta: Optional[OrderHistoryMeta] = None
+
+
+class PnLBySymbol(BaseModel):
+    """PnL breakdown by symbol"""
+    symbol: str
+    realized_pnl: float
+    position_count: int
+
+
+class PnLSummaryResponse(BaseModel):
+    """Response model for PnL summary"""
+    success: bool = True
+    total_pnl: float
+    total_realized_pnl: float
+    total_unrealized_pnl: float
+    position_count: int
+    pnl_by_symbol: List[PnLBySymbol]
+
+
+class PollingIntervalResponse(BaseModel):
+    """Response model for polling interval configuration"""
+    interval_seconds: int
+    min_interval: int = 1
+    max_interval: int = 5
+
+
+# Auth0 User Models
+class Auth0User(BaseModel):
+    """User information from Auth0 token"""
+    email: str
+    sub: str
+    name: Optional[str] = None
+    email_verified: bool = False
+    client_id: Optional[str] = None
+    whitelisted: bool = False
+
+
+class UserInfoResponse(BaseModel):
+    """Response model for user info endpoint"""
+    success: bool = True
+    user: Auth0User
+
+
+class TradeHistoryItem(BaseModel):
+    """Single trade/fill history item"""
+    id: int
+    user_id: int
+    order_id: int
+    size: int
+    price: str
+    side: str
+    product_id: int
+    product_symbol: str
+    commission: Optional[str] = None
+    realized_funding: Optional[str] = None
+    created_at: str
+
+
+class TradeHistoryMeta(BaseModel):
+    """Pagination metadata for trade history"""
+    after: Optional[str] = None
+    before: Optional[str] = None
+
+
+class TradeHistoryResponse(BaseModel):
+    """Response model for trade history"""
+    success: bool = True
+    result: List[TradeHistoryItem]
+    meta: Optional[TradeHistoryMeta] = None
+
+
+class TestDeltaConnectionRequest(BaseModel):
+    """Request model for testing Delta Exchange connection"""
+    delta_api_key: str = Field(..., description="Delta Exchange API Key")
+    delta_api_secret: str = Field(..., description="Delta Exchange API Secret")
+    delta_base_url: Optional[str] = Field(None, description="Delta Exchange Base URL (optional)")
+
+
+class TestDeltaConnectionResponse(BaseModel):
+    """Response model for Delta Exchange connection test"""
+    success: bool = Field(..., description="Whether the connection test was successful")
+    connected: bool = Field(..., description="Whether the connection is established")
+    message: Optional[str] = Field(None, description="Response message")
+    error: Optional[str] = Field(None, description="Error message if failed")

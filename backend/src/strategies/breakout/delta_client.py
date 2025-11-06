@@ -428,3 +428,7 @@ class DeltaExchangeClient:
             logger.error(f"Failed to get product info: {response}")
             return {}
 
+
+
+
+

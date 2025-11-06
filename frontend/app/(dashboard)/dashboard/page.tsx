@@ -6,9 +6,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { OrderForm } from "@/components/trading/OrderForm";
 import { PriceDisplay } from "@/components/trading/PriceDisplay";
 import { PriceChart } from "@/components/charts/PriceChart";
-import { OrderHistory } from "@/components/trading/OrderHistory";
+import { OpenPositions } from "@/components/trading/OpenPositions";
+import FearGreedIndex from "@/components/trading/FearGreedIndex";
+import CloseAllPositions from "@/components/trading/CloseAllPositions";
 import { TrendingUp, Zap, Target } from "lucide-react";
 import { getTicker, getPriceFetchInterval } from "@/lib/api/trading";
+
+// Direct Delta Exchange API function (fallback when backend is unavailable)
+async function getTickerDirect(symbol: string) {
+  try {
+    const response = await fetch(`https://api.india.delta.exchange/v2/tickers/${symbol}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.result) {
+      return {
+        success: true,
+        symbol: data.result.symbol,
+        mark_price: parseFloat(data.result.mark_price) || 0,
+        spot_price: parseFloat(data.result.spot_price) || 0,
+        close: parseFloat(data.result.close) || 0,
+        high: parseFloat(data.result.high) || 0,
+        low: parseFloat(data.result.low) || 0,
+        open: parseFloat(data.result.open) || 0,
+        volume: parseFloat(data.result.volume) || 0,
+        timestamp: data.result.timestamp,
+        full_data: data.result,
+      };
+    }
+    
+    throw new Error('Invalid response format');
+  } catch (error) {
+    console.error(`Error fetching ticker for ${symbol}:`, error);
+    throw error;
+  }
+}
 
 interface PriceData {
   price: number;
@@ -25,8 +66,9 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousPricesRef = useRef<{ btc: number | null; eth: number | null }>({ btc: null, eth: null });
+  const backendAvailableRef = useRef<boolean | null>(null); // Track backend availability
 
-  // Fetch price fetch interval from backend
+  // Fetch price fetch interval from backend (with fallback)
   useEffect(() => {
     const loadInterval = async () => {
       try {
@@ -34,7 +76,8 @@ export default function DashboardPage() {
         setFetchInterval(response.interval_seconds * 1000); // Convert to milliseconds
       } catch (error) {
         console.error("Failed to load price fetch interval, using default 5 seconds:", error);
-        // Keep default 5 seconds if fetch fails
+        // Keep default 5 seconds if fetch fails (backend unavailable)
+        // Prices will be fetched directly from Delta Exchange API
       }
     };
     loadInterval();
@@ -43,17 +86,49 @@ export default function DashboardPage() {
   // Fetch ticker prices
   const fetchPrices = useCallback(async () => {
     try {
-      const [btcResponse, ethResponse] = await Promise.all([
-        getTicker("BTCUSD"),
-        getTicker("ETHUSD"),
-      ]);
+      let btcResponse, ethResponse;
+      
+      // Only try backend if we haven't determined it's unavailable yet
+      // or if we haven't checked yet (first load)
+      if (backendAvailableRef.current !== false) {
+        try {
+          // Try backend with short timeout (3 seconds)
+          [btcResponse, ethResponse] = await Promise.all([
+            getTicker("BTCUSD", 3000),
+            getTicker("ETHUSD", 3000),
+          ]);
+          
+          // Backend is available
+          backendAvailableRef.current = true;
+        } catch (backendError) {
+          // Backend unavailable or timed out
+          backendAvailableRef.current = false;
+          // Silently fall through to direct API (don't log here to reduce console noise)
+        }
+      }
+      
+      // Use direct API if backend is not available
+      if (backendAvailableRef.current === false || !btcResponse || !ethResponse) {
+        try {
+          [btcResponse, ethResponse] = await Promise.all([
+            getTickerDirect("BTCUSD"),
+            getTickerDirect("ETHUSD"),
+          ]);
+        } catch (directApiError) {
+          // If direct API also fails, log but don't throw
+          console.error("Direct Delta Exchange API also failed:", directApiError);
+          // Return empty responses to prevent further errors
+          btcResponse = { success: false, mark_price: 0 };
+          ethResponse = { success: false, mark_price: 0 };
+        }
+      }
 
       // Update BTC price
       if (btcResponse.success && btcResponse.mark_price) {
         const currentBtcPrice = btcResponse.mark_price;
         const previousBtcPrice = previousPricesRef.current.btc;
         
-        setBtcPrice({
+        setBtcPrice((prev) => ({
           price: currentBtcPrice,
           previousPrice: previousBtcPrice || currentBtcPrice,
           change24h: btcResponse.close && btcResponse.close !== currentBtcPrice 
@@ -66,7 +141,7 @@ export default function DashboardPage() {
             : previousBtcPrice && previousBtcPrice !== currentBtcPrice
               ? ((currentBtcPrice - previousBtcPrice) / previousBtcPrice) * 100
               : undefined,
-        });
+        }));
         
         previousPricesRef.current.btc = currentBtcPrice;
       }
@@ -76,7 +151,7 @@ export default function DashboardPage() {
         const currentEthPrice = ethResponse.mark_price;
         const previousEthPrice = previousPricesRef.current.eth;
         
-        setEthPrice({
+        setEthPrice((prev) => ({
           price: currentEthPrice,
           previousPrice: previousEthPrice || currentEthPrice,
           change24h: ethResponse.close && ethResponse.close !== currentEthPrice
@@ -89,7 +164,7 @@ export default function DashboardPage() {
             : previousEthPrice && previousEthPrice !== currentEthPrice
               ? ((currentEthPrice - previousEthPrice) / previousEthPrice) * 100
               : undefined,
-        });
+        }));
         
         previousPricesRef.current.eth = currentEthPrice;
       }
@@ -97,9 +172,15 @@ export default function DashboardPage() {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching prices:", error);
-      setIsLoading(false);
+      setIsLoading((prev) => {
+        // Don't set loading to false if we haven't loaded any prices yet
+        if (previousPricesRef.current.btc === null && previousPricesRef.current.eth === null) {
+          return true; // Keep loading state on first load failure
+        }
+        return false; // Subsequent loads failed, but we have previous data
+      });
     }
-  }, []);
+  }, []); // Remove dependencies to prevent unnecessary re-renders
 
   // Set up interval to fetch prices
   useEffect(() => {
@@ -220,14 +301,26 @@ export default function DashboardPage() {
               <CardDescription>Real-time price visualization for {selectedSymbol}</CardDescription>
             </CardHeader>
             <CardContent>
-              <PriceChart />
+              <PriceChart 
+                symbol={selectedSymbol} 
+                currentPrice={selectedSymbol === "BTC" ? btcPrice.price : ethPrice.price} 
+              />
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar - Order History */}
-        <div className="lg:col-span-1">
-          <OrderHistory />
+        {/* Sidebar - Fear & Greed Index, Close All Positions, Open Positions */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Fear & Greed Index - Top */}
+          <FearGreedIndex />
+          
+          {/* Close All Positions */}
+          <div className="flex justify-center p-2">
+            <CloseAllPositions />
+          </div>
+          
+          {/* Open Positions */}
+          <OpenPositions />
         </div>
       </div>
     </div>

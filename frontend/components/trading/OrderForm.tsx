@@ -11,7 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { PlaceLimitOrderWaitRequest } from "@/lib/types";
 import { placeLimitOrderWait } from "@/lib/api/trading";
 import { toast } from "sonner";
-import { TrendingUp, TrendingDown, DollarSign, Target, Shield, Clock, Lock, Mail, User, Key, Loader2 } from "lucide-react";
+import { useAuthStore } from "@/store/auth";
+import { useDeltaConnection } from "@/hooks/useDeltaConnection";
+import { TrendingUp, TrendingDown, DollarSign, Target, Shield, Clock, Lock, Mail, User, Key, Loader2, AlertCircle } from "lucide-react";
 
 interface OrderFormProps {
   orderType: "limit-wait" | "market" | "limit";
@@ -19,6 +21,8 @@ interface OrderFormProps {
 
 export function OrderForm({ orderType }: OrderFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { srpClientId, srpClientEmail } = useAuthStore();
+  const { isConnected, connectionStatus } = useDeltaConnection();
   const [formData, setFormData] = useState<PlaceLimitOrderWaitRequest>({
     symbol: "BTC",
     entry_price: 0,
@@ -30,10 +34,8 @@ export function OrderForm({ orderType }: OrderFormProps) {
     wait_time_seconds: 60,
   });
   
-  // Credentials state - never persisted
+  // Delta API credentials state - never persisted (client-side only)
   const [credentials, setCredentials] = useState({
-    srpClientId: "",
-    srpClientEmail: "",
     apiKey: "",
     apiSecret: "",
   });
@@ -41,13 +43,25 @@ export function OrderForm({ orderType }: OrderFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check connection status first
+    if (!isConnected) {
+      toast.error("Delta Exchange connection is not established. Please configure your API credentials in Settings and test the connection.");
+      return;
+    }
+
     if (formData.entry_price <= 0 || formData.size <= 0) {
       toast.error("Please enter valid entry price and size");
       return;
     }
 
-    if (!credentials.srpClientId || !credentials.srpClientEmail || !credentials.apiKey || !credentials.apiSecret) {
-      toast.error("Please provide all required credentials");
+    // Validate that we have client info from Supabase user
+    if (!srpClientId || !srpClientEmail) {
+      toast.error("User information not available. Please log in again.");
+      return;
+    }
+
+    if (!credentials.apiKey || !credentials.apiSecret) {
+      toast.error("Please provide Delta API credentials");
       return;
     }
 
@@ -56,8 +70,8 @@ export function OrderForm({ orderType }: OrderFormProps) {
       console.log("Placing order with data:", { ...formData, credentials: { ...credentials, apiKey: "***", apiSecret: "***" } });
       
       const result = await placeLimitOrderWait(formData, {
-        srpClientId: credentials.srpClientId,
-        srpClientEmail: credentials.srpClientEmail,
+        srpClientId: srpClientId,
+        srpClientEmail: srpClientEmail,
         deltaApiKey: credentials.apiKey,
         deltaApiSecret: credentials.apiSecret,
       });
@@ -77,10 +91,9 @@ export function OrderForm({ orderType }: OrderFormProps) {
         wait_time_seconds: 60,
       });
       
-      // Clear credentials immediately after use for privacy
+      // Clear Delta API credentials immediately after use for privacy
+      // Note: srpClientId and srpClientEmail are kept in store (from Supabase user metadata)
       setCredentials({
-        srpClientId: "",
-        srpClientEmail: "",
         apiKey: "",
         apiSecret: "",
       });
@@ -115,52 +128,33 @@ export function OrderForm({ orderType }: OrderFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Credentials Section */}
+          {/* Connection Status Warning */}
+          {!isConnected && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-yellow-800">
+                  Delta Exchange connection required
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  Please configure your Delta API credentials in Settings and test the connection before placing orders.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Delta API Credentials Section */}
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
             <div className="flex items-center gap-2 mb-2">
               <Lock className="w-4 h-4 text-slate-600" />
               <Label className="text-sm font-semibold text-slate-700">
-                Trading Credentials (Required)
+                Delta Exchange API Credentials (Required)
               </Label>
             </div>
             <p className="text-xs text-slate-500 mb-4">
-              Credentials are never stored and cleared after order placement for privacy
+              Your user information is automatically used for order validation. 
+              API credentials are never stored and cleared after order placement for privacy.
             </p>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="srpClientId" className="text-sm font-semibold flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  SRP Client ID *
-                </Label>
-                <Input
-                  id="srpClientId"
-                  type="password"
-                  value={credentials.srpClientId}
-                  onChange={(e) => setCredentials({ ...credentials, srpClientId: e.target.value })}
-                  required
-                  placeholder="Enter SRP Client ID"
-                  className="h-11"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="srpClientEmail" className="text-sm font-semibold flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  SRP Client Email *
-                </Label>
-                <Input
-                  id="srpClientEmail"
-                  type="password"
-                  value={credentials.srpClientEmail}
-                  onChange={(e) => setCredentials({ ...credentials, srpClientEmail: e.target.value })}
-                  required
-                  placeholder="Enter SRP Client Email"
-                  className="h-11"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -343,7 +337,7 @@ export function OrderForm({ orderType }: OrderFormProps) {
           <Button 
             type="submit" 
             className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg disabled:opacity-70 disabled:cursor-not-allowed" 
-            disabled={isLoading}
+            disabled={isLoading || !isConnected}
             size="lg"
           >
             {isLoading ? (

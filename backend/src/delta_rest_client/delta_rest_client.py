@@ -167,6 +167,17 @@ class DeltaRestClient:
     else:
       return positions[0]
 
+  def get_all_margined_positions(self):
+    """Get all margined positions without filtering by product_id"""
+    response = self.request(
+      "GET",
+      "/v2/positions/margined",
+      query=None,
+      auth=True
+    )
+    positions = parseResponse(response)
+    return positions if positions else []
+
   def set_leverage(self, product_id, leverage):
     response = self.request(
       "POST",

@@ -1,0 +1,25 @@
+API Endpoint: GET https://pro-api.coinmarketcap.com/v3/fear-and-greed/latest
+Response Example:
+
+{
+"data": {
+"value ": 40,
+"value_classification": "Neutral",
+"update_time": "2024-09-19T02:54:56.017Z"
+},
+"status": {
+"timestamp": "2025-10-23T03:16:02.306Z",
+"error_code": 0,
+"error_message": "",
+"elapsed": 10,
+"credit_count": 1,
+"notice": ""
+}
+}
+Yearly High and Low
+Yearly High 
+(Nov 21, 2024)
+Extreme Greed - 88
+Yearly Low 
+(Mar 11, 2025)
+Extreme Fear - 15

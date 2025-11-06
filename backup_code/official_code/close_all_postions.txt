@@ -1,0 +1,35 @@
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'api-key': '****',
+  'signature': '****',
+  'timestamp': '****'
+}
+
+r = requests.post('https://api.india.delta.exchange/v2/positions/close_all', params={
+
+}, headers = headers)
+
+print r.json()
+
+Body parameter
+
+{
+  "close_all_portfolio": true,
+  "close_all_isolated": true,
+  "user_id": 0
+}
+Parameters
+Parameter	In	Type	Required	Description
+body	body	object	true	none
+» close_all_portfolio	body	boolean	true	none
+» close_all_isolated	body	boolean	true	none
+» user_id	body	integer	true	none
+Example responses
+
+200 Response
+
+{
+  "success": true
+}

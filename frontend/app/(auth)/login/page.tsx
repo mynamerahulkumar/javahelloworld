@@ -1,149 +1,196 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { login } from "@/lib/api/trading";
-import { Lock, Mail, User, Loader2 } from "lucide-react";
+import SupabaseLoginButton from "@/components/auth/supabase/LoginButton";
+import Image from "next/image";
+import { TrendingUp, Shield, Zap } from "lucide-react";
+import { useUser } from "@/lib/auth/supabase/hooks";
+
+interface Particle {
+  left: string;
+  top: string;
+  delay: string;
+  duration: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const setAuthenticated = useAuthStore((state) => state.setAuthenticated);
-  const [formData, setFormData] = useState({
-    srpClientId: "",
-    srpClientEmail: "",
-    srpPassword: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading } = useUser();
+  const [particles, setParticles] = useState<Particle[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.srpClientId || !formData.srpClientEmail || !formData.srpPassword) {
-      toast.error("Please provide all required credentials");
-      return;
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push("/dashboard");
     }
+  }, [user, isLoading, router]);
 
-    setIsLoading(true);
-    try {
-      const response = await login({
-        srp_client_id: formData.srpClientId,
-        srp_client_email: formData.srpClientEmail,
-        srp_password: formData.srpPassword,
-      });
+  // Generate particles only on client side to avoid hydration mismatch
+  useEffect(() => {
+    const generatedParticles: Particle[] = Array.from({ length: 6 }, () => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 3}s`,
+      duration: `${3 + Math.random() * 2}s`,
+    }));
+    setParticles(generatedParticles);
+  }, []);
 
-      if (response.success) {
-        setAuthenticated(true);
-        toast.success("Login successful");
-        // Clear form data immediately after successful login for privacy
-        setFormData({ srpClientId: "", srpClientEmail: "", srpPassword: "" });
-        router.push("/dashboard");
-      } else {
-        toast.error(response.error || "Login failed");
-      }
-    } catch (error: any) {
-      toast.error(error.detail || "Login failed. Please check your credentials.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render login page if user is already authenticated
+  if (user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
-      <Card className="w-full max-w-md shadow-2xl border-2 border-slate-200 bg-white">
-        <CardHeader className="text-center pb-6 space-y-4">
-          <div className="flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl">AT</span>
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/main_logo.png"
+          alt="SRP Algo Trading Background"
+          fill
+          className="object-cover"
+          priority
+          quality={90}
+        />
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-blue-900/70 to-indigo-900/80 backdrop-blur-sm" />
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-indigo-600/20 animate-pulse" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid lg:grid-cols-2 gap-8 items-center">
+          {/* Left Side - Branding and Features */}
+          <div className="hidden lg:block space-y-8 text-white">
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-100 bg-clip-text text-transparent">
+                    SRP Algo Trading
+                  </h1>
+                  <p className="text-blue-200 text-sm font-medium">Professional Trading Platform</p>
+                </div>
+              </div>
+              
+              <div className="space-y-6 pt-8">
+                <div className="flex items-start gap-4 group">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                    <Zap className="w-6 h-6 text-blue-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">Advanced Algorithms</h3>
+                    <p className="text-blue-100/80 text-sm">Powerful trading strategies powered by cutting-edge algorithms</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4 group">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
+                    <Shield className="w-6 h-6 text-indigo-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">Secure & Reliable</h3>
+                    <p className="text-blue-100/80 text-sm">Enterprise-grade security with real-time risk management</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4 group">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                    <TrendingUp className="w-6 h-6 text-purple-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">Real-Time Analytics</h3>
+                    <p className="text-blue-100/80 text-sm">Monitor your positions and performance with live data</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Algo Trading Platform
-            </CardTitle>
-            <CardDescription className="text-base">
-              Secure login to access your trading dashboard
-            </CardDescription>
+
+          {/* Right Side - Login Card */}
+          <div className="w-full flex justify-center lg:justify-end">
+            <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-xl rounded-2xl overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+              {/* Card Header with Gradient */}
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6">
+                <CardHeader className="text-center pb-4 space-y-4">
+                  <div className="flex justify-center">
+                    <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl border-2 border-white/30">
+                      <TrendingUp className="w-10 h-10 text-white" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <CardTitle className="text-3xl font-bold text-white">
+                      Welcome Back
+                    </CardTitle>
+                    <CardDescription className="text-blue-100 text-base">
+                      Sign in to your trading account
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+              </div>
+
+              <CardContent className="p-8">
+                <div className="space-y-6">
+                  <SupabaseLoginButton />
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="text-xs text-center text-gray-500">
+                      <Shield className="w-3 h-3 inline mr-1" />
+                      Your credentials are securely managed by Supabase
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="srpClientId" className="text-sm font-semibold flex items-center gap-2">
-                <User className="w-4 h-4" />
-                SRP Client ID *
-              </Label>
-              <Input
-                id="srpClientId"
-                type="password"
-                value={formData.srpClientId}
-                onChange={(e) => setFormData({ ...formData, srpClientId: e.target.value })}
-                required
-                placeholder="Enter your SRP Client ID"
-                className="h-12 text-base"
-                disabled={isLoading}
-              />
+        </div>
+
+        {/* Mobile Branding */}
+        <div className="lg:hidden text-center text-white mb-8 space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-xl">
+              <TrendingUp className="w-7 h-7 text-white" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="srpClientEmail" className="text-sm font-semibold flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                SRP Client Email *
-              </Label>
-              <Input
-                id="srpClientEmail"
-                type="password"
-                value={formData.srpClientEmail}
-                onChange={(e) => setFormData({ ...formData, srpClientEmail: e.target.value })}
-                required
-                placeholder="Enter your SRP Client Email"
-                className="h-12 text-base"
-                disabled={isLoading}
-              />
+            <div>
+              <h1 className="text-3xl font-bold">SRP Algo Trading</h1>
+              <p className="text-blue-200 text-sm">Professional Trading Platform</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="srpPassword" className="text-sm font-semibold flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                SRP Password *
-              </Label>
-              <Input
-                id="srpPassword"
-                type="password"
-                value={formData.srpPassword}
-                onChange={(e) => setFormData({ ...formData, srpPassword: e.target.value })}
-                required
-                placeholder="Enter your SRP Password"
-                className="h-12 text-base"
-                disabled={isLoading}
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 mr-2" />
-                  Login
-                </>
-              )}
-            </Button>
-            <p className="text-xs text-center text-slate-500 pt-2">
-              Your credentials are never stored for privacy protection
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating particles effect - client-side only */}
+      {particles.length > 0 && (
+        <div className="absolute inset-0 z-[5] pointer-events-none overflow-hidden">
+          {particles.map((particle, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-blue-400/30 rounded-full animate-float"
+              style={{
+                left: particle.left,
+                top: particle.top,
+                animationDelay: particle.delay,
+                animationDuration: particle.duration,
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

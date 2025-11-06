@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -11,7 +12,7 @@ interface PriceDisplayProps {
   changePercent24h?: number;
 }
 
-export function PriceDisplay({ symbol, price, change24h, changePercent24h }: PriceDisplayProps) {
+export const PriceDisplay = memo(function PriceDisplay({ symbol, price, change24h, changePercent24h }: PriceDisplayProps) {
   const isPositive = (changePercent24h || 0) >= 0;
   const changeColor = isPositive ? "text-green-500" : "text-red-500";
   const changeBgColor = isPositive ? "bg-green-500/10" : "bg-red-500/10";
@@ -51,5 +52,5 @@ export function PriceDisplay({ symbol, price, change24h, changePercent24h }: Pri
       </CardContent>
     </Card>
   );
-}
+});
 
