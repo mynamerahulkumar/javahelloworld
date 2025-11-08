@@ -12,6 +12,9 @@ aws-deploy/
 ├── start-all.sh           # Start all services (production)
 ├── stop-all.sh            # Stop all services (production)
 ├── restart-all.sh         # Restart all services (production)
+├── simple-start-all.sh    # Minimal start script (no checks)
+├── simple-stop-all.sh     # Minimal stop script
+├── simple-restart-all.sh  # Minimal restart script
 ├── backend/
 │   ├── start.sh           # Start backend (production)
 │   ├── stop.sh            # Stop backend (production)
@@ -50,6 +53,16 @@ cd aws-deploy
 
 ```bash
 ./aws-deploy/restart-all.sh
+```
+
+### 5. Simple Scripts (Minimal Checks)
+
+Use these when you want lightweight process management without port or dependency checks:
+
+```bash
+./aws-deploy/simple-start-all.sh
+./aws-deploy/simple-stop-all.sh
+./aws-deploy/simple-restart-all.sh
 ```
 
 ## 📝 Viewing Logs
