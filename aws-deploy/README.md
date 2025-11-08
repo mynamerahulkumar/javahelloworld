@@ -15,6 +15,7 @@ aws-deploy/
 ├── simple-start-all.sh    # Minimal start script (no checks)
 ├── simple-stop-all.sh     # Minimal stop script
 ├── simple-restart-all.sh  # Minimal restart script
+├── check-services.sh      # Verify backend/frontend status
 ├── backend/
 │   ├── start.sh           # Start backend (production)
 │   ├── stop.sh            # Stop backend (production)
@@ -63,6 +64,15 @@ Use these when you want lightweight process management without port or dependenc
 ./aws-deploy/simple-start-all.sh
 ./aws-deploy/simple-stop-all.sh
 ./aws-deploy/simple-restart-all.sh
+```
+
+### 6. Check Service Status
+
+Run the diagnostic helper to verify processes, ports, and HTTP endpoints:
+
+```bash
+./aws-deploy/check-services.sh             # defaults to localhost
+./aws-deploy/check-services.sh 127.0.0.1   # custom host/IP
 ```
 
 ## 📝 Viewing Logs
