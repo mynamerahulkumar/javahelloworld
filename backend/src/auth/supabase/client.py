@@ -69,3 +69,4 @@ def get_supabase_client_anon() -> Optional[Client]:
 
 
 
+

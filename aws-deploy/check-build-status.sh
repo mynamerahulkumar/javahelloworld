@@ -55,3 +55,4 @@ echo "   5. Check environment: cat frontend/.env.local"
 
 
 
+

@@ -87,3 +87,4 @@ sudo journalctl -u trading-frontend -f
 
 
 
+
