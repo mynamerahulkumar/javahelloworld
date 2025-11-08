@@ -85,3 +85,5 @@ sudo journalctl -u trading-frontend -f
 - **Local scripts** (root directory): Development mode with hot-reload
 - **AWS scripts** (aws-deploy/): Production mode with workers
 
+
+

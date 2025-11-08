@@ -4,7 +4,7 @@ FastAPI routes for trading API
 import logging
 import httpx
 import time
-from fastapi import APIRouter, HTTPException, status, Header, Depends
+from fastapi import APIRouter, HTTPException, status, Header, Depends, Query
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from models import (
@@ -66,6 +66,45 @@ async def login(request: LoginRequest) -> LoginResponse:
             success=False,
             message="Login failed",
             error=f"Internal server error: {str(e)}"
+        )
+
+
+@router.get("/verify-client-email")
+async def verify_client_email(
+    email: str = Query(..., description="SRP client email to verify"),
+    client_id: Optional[str] = Query(None, description="SRP client ID to validate against email"),
+):
+    """Check if provided SRP client credentials exist in whitelist CSV."""
+    try:
+        normalized_email = email.strip().lower()
+        if not normalized_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is required"
+            )
+
+        stored_client_id = client_auth.get_client_id_by_email(normalized_email)
+        is_authorized = stored_client_id is not None
+        client_id_normalized = client_id.strip() if client_id else None
+        id_matches = bool(
+            is_authorized and (
+                client_id_normalized is None or stored_client_id == client_id_normalized
+            )
+        )
+
+        return {
+            "email": normalized_email,
+            "authorized": is_authorized,
+            "client_id": stored_client_id,
+            "id_matches": id_matches,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to verify client email %s: %s", email, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to verify client email"
         )
 
 

@@ -73,3 +73,5 @@ echo ""
 echo "📝 View logs: tail -f logs/bot.log"
 echo "🛑 To stop the server, run: ./aws-deploy/backend/stop.sh"
 
+
+

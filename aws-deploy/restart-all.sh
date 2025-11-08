@@ -23,3 +23,5 @@ sleep 5
 # Start all services
 ./aws-deploy/start-all.sh
 
+
+

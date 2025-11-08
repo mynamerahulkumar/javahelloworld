@@ -93,3 +93,5 @@ echo "📝 Next steps:"
 echo "   1. Reinstall: ./aws-deploy/install-dependencies.sh"
 echo "   2. Or minimal: ./aws-deploy/install-dependencies-minimal.sh"
 
+
+

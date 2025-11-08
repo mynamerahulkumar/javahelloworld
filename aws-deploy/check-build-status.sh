@@ -53,3 +53,5 @@ echo "   3. Check disk space: df -h (need at least 1GB free)"
 echo "   4. Try simple build: ./build-frontend-simple.sh"
 echo "   5. Check environment: cat frontend/.env.local"
 
+
+

@@ -226,3 +226,5 @@ tail -f backend/logs/bot.log | grep -E "(Request:|Response:)"
 - Logging configuration: `backend/main.py`
 - Frontend API client: `frontend/lib/api/trading.ts`
 
+
+

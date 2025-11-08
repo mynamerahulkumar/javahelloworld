@@ -9,14 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { useCredentialsStore } from "@/store/credentials";
 import { useDeltaConnection } from "@/hooks/useDeltaConnection";
 import { testConnection as testDeltaConnection } from "@/lib/api/delta-direct";
+import { verifyClientEmail } from "@/lib/api/trading";
 import { Eye, EyeOff, Save, Key, Lock, Trash2, CheckCircle2, XCircle, Loader2, TestTube } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
 
 export default function SettingsPage() {
   const { setCredentials, getCredentials, clearCredentials, hasCredentials } = useCredentialsStore();
-  const { connectionStatus, isConnected, isTesting, testConnection: testConnectionHook, lastConnectionTest } = useDeltaConnection();
-  const { srpClientEmail } = useAuthStore();
+  const { isConnected, isTesting, testConnection: testConnectionHook, lastConnectionTest } = useDeltaConnection();
+  const { srpClientEmail: authSrpClientEmail, srpClientId: authSrpClientId } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showApiSecret, setShowApiSecret] = useState(false);
@@ -27,6 +28,7 @@ export default function SettingsPage() {
     deltaApiSecret: "",
     deltaBaseUrl: "https://api.india.delta.exchange",
     srpClientEmail: "",
+    srpClientId: "",
   });
 
   // Load credentials only after mount to prevent hydration errors
@@ -38,16 +40,18 @@ export default function SettingsPage() {
         deltaApiKey: existingCredentials.deltaApiKey || "",
         deltaApiSecret: existingCredentials.deltaApiSecret || "",
         deltaBaseUrl: existingCredentials.deltaBaseUrl || "https://api.india.delta.exchange",
-        srpClientEmail: existingCredentials.srpClientEmail || srpClientEmail || "",
+        srpClientEmail: existingCredentials.srpClientEmail || authSrpClientEmail || "",
+        srpClientId: existingCredentials.srpClientId || authSrpClientId || "",
       });
     } else {
-      // Pre-fill SRP client email from auth store if available
+      // Pre-fill SRP client info from auth store if available
       setFormData((prev) => ({
         ...prev,
-        srpClientEmail: srpClientEmail || "",
+        srpClientEmail: authSrpClientEmail || "",
+        srpClientId: authSrpClientId || "",
       }));
     }
-  }, [getCredentials, srpClientEmail]);
+  }, [getCredentials, authSrpClientEmail, authSrpClientId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +66,11 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!formData.srpClientId) {
+      toast.error("Please provide SRP Client ID");
+      return;
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.srpClientEmail)) {
@@ -71,18 +80,33 @@ export default function SettingsPage() {
 
     setIsSaving(true);
     try {
+      const trimmedEmail = formData.srpClientEmail.trim();
+      const trimmedClientId = formData.srpClientId.trim();
+
+      const verification = await verifyClientEmail(trimmedEmail, trimmedClientId);
+      if (!verification.authorized) {
+        toast.error("SRP client email is not authorized. Please contact support.");
+        return;
+      }
+
+      if (!verification.id_matches) {
+        toast.error("SRP Client ID does not match our records. Please double-check and try again.");
+        return;
+      }
+
       setCredentials({
         deltaApiKey: formData.deltaApiKey.trim(),
         deltaApiSecret: formData.deltaApiSecret.trim(),
         deltaBaseUrl: formData.deltaBaseUrl.trim() || "https://api.india.delta.exchange",
-        srpClientEmail: formData.srpClientEmail.trim(),
+        srpClientEmail: trimmedEmail,
+        srpClientId: trimmedClientId,
       });
       toast.success("Delta API credentials saved successfully (client-side only)");
       // Test connection after saving
       setTimeout(() => {
         testConnectionHook();
       }, 500);
-    } catch (error) {
+    } catch {
       toast.error("Failed to save credentials");
     } finally {
       setIsSaving(false);
@@ -95,8 +119,27 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!formData.srpClientEmail || !formData.srpClientId) {
+      toast.error("Please provide SRP Client Email and Client ID before testing");
+      return;
+    }
+
     setIsTestingConnection(true);
     try {
+      const trimmedEmail = formData.srpClientEmail.trim();
+      const trimmedClientId = formData.srpClientId.trim();
+
+      const verification = await verifyClientEmail(trimmedEmail, trimmedClientId);
+      if (!verification.authorized) {
+        toast.error("SRP client email is not authorized. Please contact support.");
+        return;
+      }
+
+      if (!verification.id_matches) {
+        toast.error("SRP Client ID does not match our records. Please double-check and try again.");
+        return;
+      }
+
       const result = await testDeltaConnection(
         formData.deltaApiKey,
         formData.deltaApiSecret,
@@ -110,13 +153,15 @@ export default function SettingsPage() {
           deltaApiKey: formData.deltaApiKey.trim(),
           deltaApiSecret: formData.deltaApiSecret.trim(),
           deltaBaseUrl: formData.deltaBaseUrl.trim() || "https://api.india.delta.exchange",
-          srpClientEmail: formData.srpClientEmail.trim(),
+          srpClientEmail: trimmedEmail,
+          srpClientId: trimmedClientId,
         });
       } else {
         toast.error(result.error || "Connection test failed");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Connection test failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Connection test failed";
+      toast.error(message);
     } finally {
       setIsTestingConnection(false);
     }
@@ -129,7 +174,8 @@ export default function SettingsPage() {
         deltaApiKey: "",
         deltaApiSecret: "",
         deltaBaseUrl: "https://api.india.delta.exchange",
-        srpClientEmail: srpClientEmail || "",
+        srpClientEmail: authSrpClientEmail || "",
+        srpClientId: authSrpClientId || "",
       });
       toast.success("Credentials deleted successfully");
     }
@@ -213,6 +259,25 @@ export default function SettingsPage() {
               />
               <p className="text-xs text-gray-500">
                 Your email must be registered in the SRP algo trade API whitelist
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="srpClientId" className="text-sm font-semibold">
+                SRP Client ID *
+              </Label>
+              <Input
+                id="srpClientId"
+                type="text"
+                value={formData.srpClientId}
+                onChange={(e) => setFormData({ ...formData, srpClientId: e.target.value })}
+                placeholder="Enter your SRP Client ID"
+                required
+                disabled={isSaving}
+                className="h-11"
+              />
+              <p className="text-xs text-gray-500">
+                Client ID must match the ID listed in the SRP whitelist CSV.
               </p>
             </div>
 

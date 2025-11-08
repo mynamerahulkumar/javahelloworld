@@ -20,3 +20,5 @@ sleep 3
 # Start the server
 ./aws-deploy/backend/start.sh
 
+
+

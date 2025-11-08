@@ -4,12 +4,12 @@
 import { useEffect, useCallback } from "react";
 import { useCredentialsStore } from "@/store/credentials";
 import { testConnection } from "@/lib/api/delta-direct";
+import { verifyClientEmail } from "@/lib/api/trading";
 
 export function useDeltaConnection() {
   const {
     credentials,
     connectionStatus,
-    lastConnectionTest,
     setConnectionStatus,
     setLastConnectionTest,
     getLastConnectionTestDate,
@@ -26,13 +26,29 @@ export function useDeltaConnection() {
     }
 
     const creds = credentials;
-    if (!creds?.deltaApiKey || !creds?.deltaApiSecret) {
+    if (
+      !creds?.deltaApiKey ||
+      !creds?.deltaApiSecret ||
+      !creds?.srpClientEmail ||
+      !creds?.srpClientId
+    ) {
       setConnectionStatus("disconnected");
       return;
     }
 
     setConnectionStatus("testing");
     try {
+      const verification = await verifyClientEmail(
+        creds.srpClientEmail,
+        creds.srpClientId
+      );
+
+      if (!verification.authorized || !verification.id_matches) {
+        setConnectionStatus("disconnected");
+        setLastConnectionTest(new Date());
+        return;
+      }
+
       const result = await testConnection(
         creds.deltaApiKey,
         creds.deltaApiSecret,
@@ -47,6 +63,7 @@ export function useDeltaConnection() {
         setLastConnectionTest(new Date());
       }
     } catch (error) {
+      console.warn("Delta connection test failed", error);
       setConnectionStatus("disconnected");
       setLastConnectionTest(new Date());
     }

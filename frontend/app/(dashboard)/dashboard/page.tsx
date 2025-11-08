@@ -233,10 +233,10 @@ export default function DashboardPage() {
         {/* Order Forms - Takes 2 columns */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="limit-wait" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-14 p-1.5 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 rounded-xl shadow-inner border border-gray-200/50 backdrop-blur-sm">
+            <TabsList className="flex w-full gap-2 overflow-x-auto sm:grid sm:grid-cols-3 h-14 p-1.5 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 rounded-xl shadow-inner border border-gray-200/50 backdrop-blur-sm">
               <TabsTrigger 
                 value="limit-wait" 
-                className="group flex items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 data-[state=active]:scale-[1.02] data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 data-[state=inactive]:hover:bg-gray-50/80 data-[state=active]:border data-[state=active]:border-blue-400/30 relative overflow-hidden"
+                className="group flex min-w-[140px] flex-1 items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 data-[state=active]:scale-[1.02] data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 data-[state=inactive]:hover:bg-gray-50/80 data-[state=active]:border data-[state=active]:border-blue-400/30 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/0 to-blue-400/0 group-data-[state=active]:from-blue-400/20 group-data-[state=active]:via-blue-400/10 group-data-[state=active]:to-blue-400/20 transition-all duration-300" />
                 <Target className="w-5 h-5 relative z-10 transition-transform duration-300 group-data-[state=active]:scale-110" />
@@ -245,7 +245,7 @@ export default function DashboardPage() {
               </TabsTrigger>
               <TabsTrigger 
                 value="market" 
-                className="group flex items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/50 data-[state=active]:scale-[1.02] data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 data-[state=inactive]:hover:bg-gray-50/80 data-[state=active]:border data-[state=active]:border-amber-400/30 relative overflow-hidden"
+                className="group flex min-w-[140px] flex-1 items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/50 data-[state=active]:scale-[1.02] data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 data-[state=inactive]:hover:bg-gray-50/80 data-[state=active]:border data-[state=active]:border-amber-400/30 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-amber-400/0 via-amber-400/0 to-amber-400/0 group-data-[state=active]:from-amber-400/20 group-data-[state=active]:via-amber-400/10 group-data-[state=active]:to-amber-400/20 transition-all duration-300" />
                 <Zap className="w-5 h-5 relative z-10 transition-transform duration-300 group-data-[state=active]:scale-110" />
@@ -253,7 +253,7 @@ export default function DashboardPage() {
               </TabsTrigger>
               <TabsTrigger 
                 value="limit" 
-                className="group flex items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 data-[state=active]:scale-[1.02] data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 data-[state=inactive]:hover:bg-gray-50/80 data-[state=active]:border data-[state=active]:border-emerald-400/30 relative overflow-hidden"
+                className="group flex min-w-[140px] flex-1 items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 data-[state=active]:scale-[1.02] data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 data-[state=inactive]:hover:bg-gray-50/80 data-[state=active]:border data-[state=active]:border-emerald-400/30 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/0 via-emerald-400/0 to-emerald-400/0 group-data-[state=active]:from-emerald-400/20 group-data-[state=active]:via-emerald-400/10 group-data-[state=active]:to-emerald-400/20 transition-all duration-300" />
                 <TrendingUp className="w-5 h-5 relative z-10 transition-transform duration-300 group-data-[state=active]:scale-110" />

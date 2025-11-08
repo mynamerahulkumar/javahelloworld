@@ -131,3 +131,5 @@ echo "   1. Remove node_modules and reinstall: cd frontend && rm -rf node_module
 echo "   2. Remove .venv and reinstall: cd backend && rm -rf .venv && uv sync"
 echo "   3. Use the minimal install script: ./aws-deploy/install-dependencies-minimal.sh"
 
+
+

@@ -11,18 +11,19 @@ import { Separator } from "@/components/ui/separator";
 import { PlaceLimitOrderWaitRequest } from "@/lib/types";
 import { placeLimitOrderWait } from "@/lib/api/trading";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/auth";
 import { useDeltaConnection } from "@/hooks/useDeltaConnection";
-import { TrendingUp, TrendingDown, DollarSign, Target, Shield, Clock, Lock, Mail, User, Key, Loader2, AlertCircle } from "lucide-react";
+import { useCredentialsStore } from "@/store/credentials";
+import { TrendingUp, TrendingDown, DollarSign, Target, Shield, Clock, Loader2, AlertCircle } from "lucide-react";
 
 interface OrderFormProps {
   orderType: "limit-wait" | "market" | "limit";
 }
 
 export function OrderForm({ orderType }: OrderFormProps) {
+  void orderType;
   const [isLoading, setIsLoading] = useState(false);
-  const { srpClientId, srpClientEmail } = useAuthStore();
-  const { isConnected, connectionStatus } = useDeltaConnection();
+  const { isConnected } = useDeltaConnection();
+  const credentials = useCredentialsStore((state) => state.credentials);
   const [formData, setFormData] = useState<PlaceLimitOrderWaitRequest>({
     symbol: "BTC",
     entry_price: 0,
@@ -34,12 +35,6 @@ export function OrderForm({ orderType }: OrderFormProps) {
     wait_time_seconds: 60,
   });
   
-  // Delta API credentials state - never persisted (client-side only)
-  const [credentials, setCredentials] = useState({
-    apiKey: "",
-    apiSecret: "",
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -55,25 +50,39 @@ export function OrderForm({ orderType }: OrderFormProps) {
     }
 
     // Validate that we have client info from Supabase user
-    if (!srpClientId || !srpClientEmail) {
-      toast.error("User information not available. Please log in again.");
+    if (!credentials) {
+      toast.error("Trading credentials not configured. Please use the Settings tab first.");
       return;
     }
 
-    if (!credentials.apiKey || !credentials.apiSecret) {
-      toast.error("Please provide Delta API credentials");
+    if (!credentials.srpClientEmail || !credentials.srpClientId) {
+      toast.error("SRP client credentials not found. Please configure them in Settings.");
       return;
     }
+
+    if (!credentials.deltaApiKey || !credentials.deltaApiSecret) {
+      toast.error("Delta API credentials not available. Please configure them in Settings.");
+      return;
+    }
+
+    const { srpClientEmail, srpClientId, deltaApiKey, deltaApiSecret, deltaBaseUrl } = credentials;
 
     setIsLoading(true);
     try {
-      console.log("Placing order with data:", { ...formData, credentials: { ...credentials, apiKey: "***", apiSecret: "***" } });
-      
+      console.log("Placing order with cached credentials:", {
+        ...formData,
+        credentials: {
+          srpClientEmail: `${srpClientEmail?.slice(0, 3)}***` || "",
+          srpClientId: srpClientId ? "***" : null,
+        },
+      });
+
       const result = await placeLimitOrderWait(formData, {
-        srpClientId: srpClientId,
-        srpClientEmail: srpClientEmail,
-        deltaApiKey: credentials.apiKey,
-        deltaApiSecret: credentials.apiSecret,
+        srpClientId,
+        srpClientEmail,
+        deltaApiKey,
+        deltaApiSecret,
+        deltaBaseUrl,
       });
       
       console.log("Order placed successfully:", result);
@@ -91,15 +100,12 @@ export function OrderForm({ orderType }: OrderFormProps) {
         wait_time_seconds: 60,
       });
       
-      // Clear Delta API credentials immediately after use for privacy
-      // Note: srpClientId and srpClientEmail are kept in store (from Supabase user metadata)
-      setCredentials({
-        apiKey: "",
-        apiSecret: "",
-      });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Order placement error:", error);
-      const errorMessage = error.detail || error.message || "Failed to place order. Please check your credentials and try again.";
+      const errorMessage =
+        (typeof error === "object" && error !== null && "detail" in error ? (error as { detail?: string }).detail : undefined) ||
+        (error instanceof Error ? error.message : undefined) ||
+        "Failed to place order. Please check your credentials and try again.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -143,59 +149,27 @@ export function OrderForm({ orderType }: OrderFormProps) {
             </div>
           )}
 
-          {/* Delta API Credentials Section */}
-          <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-4 h-4 text-slate-600" />
-              <Label className="text-sm font-semibold text-slate-700">
-                Delta Exchange API Credentials (Required)
-              </Label>
-            </div>
-            <p className="text-xs text-slate-500 mb-4">
-              Your user information is automatically used for order validation. 
-              API credentials are never stored and cleared after order placement for privacy.
+          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <Label className="text-sm font-semibold text-slate-700">
+              Delta Exchange Credentials
+            </Label>
+            <p className="text-xs text-slate-500">
+              API keys and SRP identifiers are managed in Settings and cached securely in your browser. Update them there before placing orders.
             </p>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="apiKey" className="text-sm font-semibold flex items-center gap-2">
-                  <Key className="w-4 h-4" />
-                  API Key *
-                </Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={credentials.apiKey}
-                  onChange={(e) => setCredentials({ ...credentials, apiKey: e.target.value })}
-                  required
-                  placeholder="Enter API Key"
-                  className="h-11"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="apiSecret" className="text-sm font-semibold flex items-center gap-2">
-                  <Key className="w-4 h-4" />
-                  Security API Key *
-                </Label>
-                <Input
-                  id="apiSecret"
-                  type="password"
-                  value={credentials.apiSecret}
-                  onChange={(e) => setCredentials({ ...credentials, apiSecret: e.target.value })}
-                  required
-                  placeholder="Enter Security API Key"
-                  className="h-11"
-                  disabled={isLoading}
-                />
-              </div>
+            <div className="text-xs text-slate-600 grid gap-1">
+              <span>
+                SRP Email: {credentials?.srpClientEmail ? `${credentials.srpClientEmail}` : "Not configured"}
+              </span>
+              <span>
+                SRP Client ID: {credentials?.srpClientId ? "Configured" : "Not configured"}
+              </span>
             </div>
           </div>
 
           <Separator className="my-4" />
 
           {/* Symbol and Side */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="symbol" className="text-sm font-semibold flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
@@ -236,7 +210,7 @@ export function OrderForm({ orderType }: OrderFormProps) {
           </div>
 
           {/* Entry Price and Size */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="entry_price" className="text-sm font-semibold">
                 Entry Price *
@@ -269,7 +243,7 @@ export function OrderForm({ orderType }: OrderFormProps) {
           </div>
 
           {/* Stop Loss and Take Profit */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="stop_loss_price" className="text-sm font-semibold flex items-center gap-2">
                 <Shield className="w-4 h-4" />
@@ -303,7 +277,7 @@ export function OrderForm({ orderType }: OrderFormProps) {
           </div>
 
           {/* Additional Options */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="client_order_id" className="text-sm font-semibold">
                 Client Order ID (Optional)

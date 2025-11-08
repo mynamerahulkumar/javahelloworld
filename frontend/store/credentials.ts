@@ -10,6 +10,7 @@ export interface DeltaCredentials {
   deltaApiSecret: string;
   deltaBaseUrl?: string;
   srpClientEmail?: string;
+  srpClientId?: string;
 }
 
 export type ConnectionStatus = "connected" | "disconnected" | "testing" | "unknown";
@@ -43,7 +44,15 @@ export const useCredentialsStore = create<CredentialsState>()(
       }),
       hasCredentials: () => {
         const creds = get().credentials;
-        return !!(creds?.deltaApiKey && creds?.deltaApiSecret);
+        if (!creds) {
+          return false;
+        }
+        return !!(
+          creds.deltaApiKey &&
+          creds.deltaApiSecret &&
+          creds.srpClientEmail &&
+          creds.srpClientId
+        );
       },
       setConnectionStatus: (status: ConnectionStatus) =>
         set({ connectionStatus: status }),

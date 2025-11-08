@@ -268,7 +268,7 @@ export const OpenPositions = memo(function OpenPositions() {
         {/* Unrealized PnL Summary */}
         <div className="mb-5">
           <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200/60 shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className={`p-2.5 rounded-xl ${totalUnrealizedPnL >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                   <DollarSign className={`w-5 h-5 ${totalUnrealizedPnL >= 0 ? 'text-green-600' : 'text-red-600'}`} />
@@ -331,7 +331,7 @@ export const OpenPositions = memo(function OpenPositions() {
                   key={`${position.product_id}-${index}`}
                   className="p-5 rounded-2xl border-2 bg-gradient-to-br from-white to-gray-50/50 hover:shadow-xl transition-all duration-300 border-gray-200/60 hover:border-blue-400/60 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-xl ${isLong ? 'bg-green-100' : 'bg-red-100'}`}>
                         {isLong ? (
@@ -356,7 +356,7 @@ export const OpenPositions = memo(function OpenPositions() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="p-2.5 rounded-lg bg-gray-50/80 border border-gray-200/50">
                       <div className="text-gray-500 text-xs mb-1.5 font-medium">Size</div>
                       <div className="font-bold text-gray-900 text-base">{Math.abs(size).toFixed(4)}</div>
