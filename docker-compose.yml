@@ -1,19 +1,28 @@
-version: "3.9"
-
 services:
-  app:
+  backend:
     build:
-      context: .
-      target: runtime
+      context: ./backend
+    image: trading-backend:latest
+    environment:
+      HOST: 0.0.0.0
+      PORT: "${BACKEND_PORT:-8501}"
+      BACKEND_WORKERS: "${BACKEND_WORKERS:-2}"
+      UVICORN_LOG_LEVEL: "${UVICORN_LOG_LEVEL:-info}"
+    ports:
+      - "${BACKEND_PORT:-8501}:8501"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    image: trading-frontend:latest
+    depends_on:
+      - backend
+    environment:
+      PORT: "${PORT:-3000}"
+      HOST: 0.0.0.0
+      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://backend:8501/api/v1}"
     ports:
       - "${PORT:-3000}:3000"
-      - "${BACKEND_PORT:-8501}:8501"
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8501/api/v1}"
-      PORT: "${PORT:-3000}"
-      BACKEND_PORT: "${BACKEND_PORT:-8501}"
-      BACKEND_WORKERS: "${BACKEND_WORKERS:-4}"
-    volumes:
-      - ./logs:/app/logs
     restart: unless-stopped
 
