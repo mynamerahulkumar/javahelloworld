@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "${PORT:-3000}:3000"
+      - "${BACKEND_PORT:-8501}:8501"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8501/api/v1}"
+      PORT: "${PORT:-3000}"
+      BACKEND_PORT: "${BACKEND_PORT:-8501}"
+      BACKEND_WORKERS: "${BACKEND_WORKERS:-4}"
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+

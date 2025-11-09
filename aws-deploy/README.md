@@ -25,6 +25,24 @@ aws-deploy/
 
 ## 🚀 Quick Start
 
+### 0. Prerequisites on the EC2 instance
+
+Run these once after pulling the repository (or whenever dependencies change):
+
+```bash
+# Backend Python dependencies
+cd backend
+python3 -m pip install -r requirements.txt
+
+# Frontend Node dependencies (installs dev packages required for build)
+cd ../frontend
+npm ci --include=dev
+npm run build
+
+# Return to project root
+cd ..
+```
+
 ### 1. Initial Deployment
 
 ```bash
@@ -65,6 +83,8 @@ Use these when you want lightweight process management without port or dependenc
 ./aws-deploy/simple-stop-all.sh
 ./aws-deploy/simple-restart-all.sh
 ```
+
+> ℹ️ The minimal scripts now validate that required backend modules and Next.js build artifacts exist. If they exit early, re-run the prerequisite steps above.
 
 ### 6. Check Service Status
 

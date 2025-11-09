@@ -6,23 +6,8 @@
 set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-cd "$PROJECT_ROOT/backend"
-
-# Function to check if port is in use (works on Linux)
-check_port() {
-    local port=$1
-    if command -v ss &> /dev/null; then
-        ss -tuln | grep -q ":$port " && return 0 || return 1
-    elif command -v netstat &> /dev/null; then
-        netstat -tuln | grep -q ":$port " && return 0 || return 1
-    elif command -v lsof &> /dev/null; then
-        lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || return 1
-    else
-        echo "⚠️  Warning: Cannot check port $port"
-        return 1
-    fi
-}
+source "$SCRIPT_DIR/../lib/common.sh"
+cd "$BACKEND_DIR"
 
 # Check if server is already running
 if check_port 8501; then
@@ -37,7 +22,7 @@ echo "📊 View logs with: tail -f logs/bot.log"
 echo ""
 
 # Create logs directory if it doesn't exist
-mkdir -p logs
+ensure_logs
 
 # Start the server in production mode (no reload, with workers)
 if command -v uv &> /dev/null; then

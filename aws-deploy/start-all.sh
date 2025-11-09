@@ -6,26 +6,11 @@
 set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 cd "$PROJECT_ROOT"
 
 echo "🚀 Starting Full Stack Application (Production Mode - AWS EC2)..."
 echo ""
-
-# Function to check if port is in use (works on Linux)
-check_port() {
-    local port=$1
-    if command -v ss &> /dev/null; then
-        ss -tuln | grep -q ":$port " && return 0 || return 1
-    elif command -v netstat &> /dev/null; then
-        netstat -tuln | grep -q ":$port " && return 0 || return 1
-    elif command -v lsof &> /dev/null; then
-        lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || return 1
-    else
-        echo "⚠️  Warning: Cannot check port $port (ss, netstat, or lsof not found)"
-        return 1
-    fi
-}
 
 # Check if backend port is already in use
 if check_port 8501; then
@@ -42,8 +27,7 @@ if check_port 3000; then
 fi
 
 # Create logs directory if it doesn't exist
-mkdir -p logs
-mkdir -p backend/logs
+ensure_logs
 
 # Start Backend
 echo "📦 Starting Backend API (Production Mode)..."
@@ -52,21 +36,21 @@ cd backend
 # Check if uv is available
 if command -v uv &> /dev/null; then
     # Use uv run for production (no reload, with workers)
-    nohup uv run python -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers 4 > ../logs/backend.log 2>&1 &
+    nohup uv run python -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers 4 > "$LOG_DIR/backend.log" 2>&1 &
     BACKEND_PID=$!
 else
     # Fallback to system Python
     if [ -d ".venv" ]; then
-        nohup .venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers 4 > ../logs/backend.log 2>&1 &
+        nohup .venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers 4 > "$LOG_DIR/backend.log" 2>&1 &
         BACKEND_PID=$!
     else
-        nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers 4 > ../logs/backend.log 2>&1 &
+        nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8501 --workers 4 > "$LOG_DIR/backend.log" 2>&1 &
         BACKEND_PID=$!
     fi
 fi
 
 cd ..
-echo $BACKEND_PID > logs/backend.pid
+record_pid "$BACKEND_PID" "backend"
 echo "✅ Backend started (PID: $BACKEND_PID)"
 echo "   Backend logs: logs/backend.log"
 
@@ -76,7 +60,7 @@ sleep 5
 # Verify backend is running
 if ! ps -p $BACKEND_PID > /dev/null 2>&1; then
     echo "❌ Backend failed to start. Check logs/backend.log for details"
-    tail -20 logs/backend.log
+    tail -20 "$LOG_DIR/backend.log"
     exit 1
 fi
 
@@ -87,9 +71,16 @@ cd frontend
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then
     echo "⚠️  node_modules not found. Installing dependencies..."
-    npm ci
+    npm ci --include=dev
     if [ $? -ne 0 ]; then
         echo "❌ Failed to install frontend dependencies"
+        exit 1
+    fi
+elif [ ! -d "node_modules/@tailwindcss/postcss" ] || [ ! -d "node_modules/tailwindcss" ]; then
+    echo "⚠️  Required Tailwind dependencies missing. Re-installing with dev packages..."
+    npm install --include=dev
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to install required dev dependencies"
         exit 1
     fi
 fi
@@ -132,11 +123,11 @@ fi
 
 # Start in production mode
 echo "🚀 Starting Next.js production server..."
-NODE_ENV=production nohup npm run start > ../logs/frontend.log 2>&1 &
+NODE_ENV=production nohup npm run start > "$LOG_DIR/frontend.log" 2>&1 &
 FRONTEND_PID=$!
 
 cd ..
-echo $FRONTEND_PID > logs/frontend.pid
+record_pid "$FRONTEND_PID" "frontend"
 echo "✅ Frontend started (PID: $FRONTEND_PID)"
 echo "   Frontend logs: logs/frontend.log"
 
@@ -148,7 +139,7 @@ if ! ps -p $FRONTEND_PID > /dev/null 2>&1; then
     echo "❌ Frontend failed to start. Check logs/frontend.log for details"
     echo ""
     echo "Last 30 lines of frontend.log:"
-    tail -30 logs/frontend.log
+    tail -30 "$LOG_DIR/frontend.log"
     exit 1
 fi
 

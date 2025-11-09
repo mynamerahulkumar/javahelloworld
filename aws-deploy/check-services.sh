@@ -4,7 +4,7 @@
 # Checks backend/frontend processes, listening ports, and HTTP endpoints.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 
 HOST="${1:-localhost}"
 BACKEND_PORT="${BACKEND_PORT:-8501}"
@@ -34,7 +34,7 @@ check_process() {
     echo ""
 }
 
-check_port() {
+check_port_status() {
     local port=$1
     local label=$2
 
@@ -83,8 +83,8 @@ check_process "Frontend (Next.js)" "next start"
 
 echo "Port checks"
 echo "-----------"
-check_port "$BACKEND_PORT" "Backend"
-check_port "$FRONTEND_PORT" "Frontend"
+check_port_status "$BACKEND_PORT" "Backend"
+check_port_status "$FRONTEND_PORT" "Frontend"
 
 echo "HTTP checks"
 echo "-----------"

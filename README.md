@@ -16,9 +16,9 @@ project-root/
 │   │   ├── utils/             # Utilities (logging, cleanup)
 │   │   └── delta_rest_client/ # Delta Exchange client
 │   ├── privatedata/           # Private data (not committed)
-│   ├── logs/                  # Application logs
 │   ├── main.py                # FastAPI app entry point
-│   ├── pyproject.toml         # Python dependencies
+│   ├── pyproject.toml         # Python dependencies (project metadata)
+│   ├── requirements.txt       # Runtime dependencies mirror
 │   └── *.sh                   # Management scripts
 │
 ├── frontend/                  # Frontend (Next.js 14)
@@ -60,9 +60,9 @@ cd backend
 
 2. Install dependencies:
 ```bash
-uv sync
-# or
-pip install -e .
+python3 -m pip install -r requirements.txt
+# Alternatively (with uv):
+# uv pip install -r requirements.txt
 ```
 
 3. Create `.env` file (copy from `.env.example`):
@@ -179,9 +179,9 @@ The API will be available at:
 cd frontend
 ```
 
-2. Install dependencies:
+2. Install dependencies (include dev packages for Tailwind build):
 ```bash
-npm install
+npm install --include=dev
 ```
 
 3. Create `.env.local` file:
@@ -273,6 +273,35 @@ The frontend uses Next.js 14 with:
 - Tailwind CSS for styling
 - App Router for routing
 - React Server Components
+
+## Docker
+
+The repository ships with a single-container Docker workflow that runs both backend (FastAPI) and frontend (Next.js) together.
+
+### Build and run with Docker directly
+
+```bash
+# Build image
+docker build -t trading-app .
+
+# Run container
+docker run --rm -p 3000:3000 -p 8501:8501 trading-app
+```
+
+### Using docker-compose (recommended for local testing)
+
+```bash
+# Optional: copy docker/env.example to docker/.env and customize
+cp docker/env.example docker/.env
+
+# Build and start
+docker compose up --build
+
+# Stop
+docker compose down
+```
+
+Environment variables for the frontend/backend can be provided through `docker/.env` or the standard Docker mechanisms. Defaults expose the backend on `http://localhost:8501` and the frontend on `http://localhost:3000`.
 
 ## Security
 
