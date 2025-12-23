@@ -182,7 +182,7 @@ graph TB
 
 **Technology Stack:**
 - FastAPI
-- Python 3.12+
+- Python >=3.12
 - Uvicorn (ASGI server)
 - Pydantic for data validation
 

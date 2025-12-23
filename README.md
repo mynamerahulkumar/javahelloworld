@@ -2,6 +2,12 @@
 
 A professional full-stack trading application with separate backend (FastAPI) and frontend (Next.js) packages.
 
+## 📐 Architecture
+
+For a comprehensive overview of the system architecture, components, and data flows, see:
+
+**[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete architecture documentation with detailed Mermaid diagrams
+
 ## Project Structure
 
 ```
